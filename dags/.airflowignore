@@ -1,0 +1,11 @@
+**/.ipynb_checkpoints/
+**/__pycache__/
+
+**/*.ipynb
+**/tasks
+**/prod_airflow_etl/lib/
+**/prod_airflow_etl/airflow/dags_test/*
+**/prod_airflow_etl/airflow/dags/da/*
+**/prod_airflow_da/lib/
+**/prod_airflow_da/airflow/dags_test/*
+**/prod_airflow_da/airflow/dags/etl/*
