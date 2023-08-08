@@ -42,6 +42,7 @@ x-airflow-common:
     - ./dags:/opt/airflow/dags
     - ./plugins:/opt/airflow/plugins
     - ./entrypoint:/entrypoint
+    - ./security.py:/home/airflow/.local/lib/python3.8/site-packages/airflow/www/security.py
     - <PATH_TO_SVC_ACCOUNT>:/opt/airflow/auth
   network_mode: "host"
   depends_on:

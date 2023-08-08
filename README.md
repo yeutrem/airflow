@@ -14,3 +14,10 @@ Step 9: Add/Edit Advance DNS:
   Record    @        External_IP_of_VM_which_host_webserver        Automatic
 Step 10: Add airflow_nginx into /etc/nginx/sites-enabled. Edit ssl path and ssl key path.
 Step 11: sudo systemctl restart nginx
+
+
+Step 12: Due to airflow doesn't support for group directly, to split dag by group (team)
+	a. create a role for team. Example: marketing-team
+        b. grant permission the same with Viewer role except 'can read on DAGS' permission
+        c. fill out owner = marketing-team in DAG. marketing-team only see the dag of marketing team.
+
