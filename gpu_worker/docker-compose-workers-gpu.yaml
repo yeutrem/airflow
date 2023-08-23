@@ -1,0 +1,78 @@
+version: '3'
+x-airflow-common:
+  &airflow-common
+  # In order to add custom dependencies or upgrade provider packages you can use your extended image.
+  # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
+  # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
+  image: airflow:prod
+  # build: .
+  environment:
+    &airflow-common-env
+    ENV: ${ENV}
+
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/airflow
+
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__WEBSERVER__SECRET_KEY: '09ea45edd33fcdd4de2730a1cf1537f1'
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    
+    AIRFLOW__WEBSERVER__BASE_URL: ${AIRFLOW__WEBSERVER__BASE_URL:-http://localhost:8080}
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'true'
+    AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: 'true'
+    AIRFLOW__WEBSERVER__PROXY_FIX_X_HOST: 3
+
+    AIRFLOW__CLI__ENDPOINT_URL: ${AIRFLOW__WEBSERVER__BASE_URL:-http://localhost:8080}
+
+    AIRFLOW__CORE__DAG_IGNORE_FILE_SYNTAX: 'glob'
+    AIRFLOW__CELERY__FLOWER_URL_PREFIX: '/flower'
+
+    AIRFLOW__LOGGING__REMOTE_LOGGING: ${AIRFLOW__LOGGING__REMOTE_LOGGING:-false}
+    AIRFLOW__LOGGING__GOOGLE_KEY_PATH: ${AIRFLOW__LOGGING__GOOGLE_KEY_PATH}
+    AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: ${AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER}
+    AIRFLOW_CONN_AIRFLOW_SSH: 'extra__google_cloud_platform__use_iap_tunnel=True'
+    
+    PYTHONPATH: '/opt/airflow/libs'
+    AIRFLOW_DEPLOYMENT_MODE: 'PROD'
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS}
+
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./operators:/opt/airflow/libs/operators
+    - /opt/auth:/opt/airflow/auth
+
+  network_mode: "host"
+  ipc: "host"
+  deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+services:
+  airflow-worker:
+    <<: *airflow-common
+    command: airflow celery worker -q ${HOSTNAME}
+    restart: always
+    ports:
+        - 8793:8793
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      interval: 20s
+      timeout: 20s
+      retries: 5
+    env_file:
+      - worker.env
+    environment:
+      <<: *airflow-common-env
+      # Required to handle warm shutdown of the celery workers properly
+      # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
+      DUMB_INIT_SETSID: "0"

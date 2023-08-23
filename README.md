@@ -20,4 +20,7 @@ Step 12: Due to airflow doesn't support for group directly, to split dag by grou
 	a. create a role for team. Example: marketing-team
         b. grant permission the same with Viewer role except 'can read on DAGS' permission
         c. fill out owner = marketing-team in DAG. marketing-team only see the dag of marketing team.
+Step 13: In case of accessing postgresql database remote, you should whitelist subnet to postgresql.
+	Find config file: SHOW hba_file;
+	whitelist for subnet
 

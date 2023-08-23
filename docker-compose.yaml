@@ -1,7 +1,7 @@
 version: '3'
 x-airflow-common:
   &airflow-common
-  image: airflow_extending:latest
+  image: airflow:prod
   build: .
   environment:
     &airflow-common-env
@@ -30,18 +30,19 @@ x-airflow-common:
     AIRFLOW__LOGGING__REMOTE_LOGGING: 'true'
     AIRFLOW__LOGGING__GOOGLE_KEY_PATH: ${AIRFLOW__LOGGING__GOOGLE_KEY_PATH}
     AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER: ${AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER}
+    AIRFLOW__LOGGING__LOGGING_LEVEL: ${AIRFLOW__LOGGING_LEVEL:-INFO}
     AIRFLOW_CONN_AIRFLOW_SSH: 'extra__google_cloud_platform__use_iap_tunnel=True'
     
-    PYTHONPATH: '/opt/airflow/dags:/opt/airflow/libs'
-    HADOOP_CONF_DIR: '/opt/hadoop-3.2.3/etc/hadoop'
+    PYTHONPATH: '/opt/airflow/libs'
     AIRFLOW_DEPLOYMENT_MODE: 'PROD'
     DAG_IGNORE_FILE_SYNTAX: 'glob'
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS}
 
   volumes:
     - ./webserver_config.py:/opt/airflow/webserver_config.py
+    - ./operators:/opt/airflow/libs/operators'
     - ./dags:/opt/airflow/dags
     - ./plugins:/opt/airflow/plugins
-    - ./entrypoint:/entrypoint
     - ./security.py:/home/airflow/.local/lib/python3.8/site-packages/airflow/www/security.py
     - <PATH_TO_SVC_ACCOUNT>:/opt/airflow/auth
   network_mode: "host"
@@ -227,7 +228,6 @@ services:
       _AIRFLOW_WWW_USER_CREATE: 'true'
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
-      _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "50000:0"
     volumes:
       - .:/sources
@@ -240,7 +240,7 @@ services:
     ports:
       - 5555:5555
     healthcheck:
-      test: ["CMD", "curl", "-u", "${REDIS_USER}:{REDIS_PASSWORD}", "http://${AIRFLOW_HOST}:5555"]
+      test: ["CMD", "curl", "-u", "${REDIS_USER}:${REDIS_PASSWORD}", "http://${AIRFLOW_HOST}:5555"]
       interval: 10s
       timeout: 10s
       retries: 5

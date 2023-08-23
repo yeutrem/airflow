@@ -53,7 +53,6 @@ RUN chmod 755 /opt/airflow/requirements.txt
 
 USER airflow
 
-COPY operators /opt/airflow/libs/operators
 COPY .airflowignore /opt/airflow/dags/.airflowignore
 RUN /home/airflow/.local/bin/pip install --user --upgrade pip
 RUN /home/airflow/.local/bin/pip install --no-cache-dir --user -r /opt/airflow/requirements.txt
