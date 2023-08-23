@@ -1,0 +1,2 @@
+create a VM with GPU (VM name: recsys-gpu-worker, GPU: 1 x NVIDIA Tesla P4).
+In dags/tess_gpu_worker.py, modify queue arg if needed..
