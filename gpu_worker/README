@@ -1,2 +1,4 @@
 create a VM with GPU (VM name: recsys-gpu-worker, GPU: 1 x NVIDIA Tesla P4).
+Step 1: run setup-gpu-driver.sh
+Step 2: run start-container.sh (note should copy all files in gpu_worker folder back to parent airflow folder. I keep it in the gpu_worker folder for reading easily.)
 In dags/tess_gpu_worker.py, modify queue arg if needed..
